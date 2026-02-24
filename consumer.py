@@ -3,6 +3,10 @@ import json
 from confluent_kafka import Consumer
 import time
 import psycopg2
+from minio import Minio
+import datetime
+import uuid
+from io import BytesIO
 
 consumer_config = {
     "bootstrap.servers": "localhost:9092",
@@ -16,6 +20,19 @@ consumer.subscribe(["nginx-logs"])
 
 print("Consumer is running and subscribed to nginx-logs topic")
 
+# minio connection 
+# insert into minio
+minio_client= Minio(
+    "localhost:9000",
+    access_key="minadmin",
+    secret_key="admin2000",
+    secure=False # because no HTTPS locally (its not puclic)
+)
+bucket_name="nginx-raw-logs" # define bucket
+        
+if not minio_client.bucket_exists(bucket_name):
+    minio_client.make_bucket(bucket_name)
+        
 # postgresql connection
 DB_NAME = "logdb"
 DB_USER = "logusr"
@@ -51,8 +68,23 @@ try:
             continue
 
         value = msg.value().decode("utf-8")
-        logs = json.loads(value)
+        
+        # Convert string to bytes and wrap in BytesIO
+        data = BytesIO(value.encode("utf-8"))
 
+        object_name=f"log-{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}-{uuid.uuid4()}.json"
+        
+        minio_client.put_object(
+            bucket_name,
+            object_name,
+            data, 
+            length=len(value.encode("utf-8")),
+            content_type="data/json"
+        )
+        print("Raw logs are saved to MinIo ",object_name)
+
+
+        logs = json.loads(value)
         # insert into postgresql
         cur.execute(
             "INSERT INTO logs (ip, time, method, endpoint, status) VALUES (%s, %s, %s, %s, %s)",

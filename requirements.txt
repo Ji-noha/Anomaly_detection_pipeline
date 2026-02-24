@@ -1,0 +1,7 @@
+json
+confluent_kafka 
+time
+psycopg2
+minio 
+datetime
+uuid

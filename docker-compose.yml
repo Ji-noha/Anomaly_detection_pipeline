@@ -45,7 +45,22 @@ services:
       POSTGRES_DB: logdb
     ports:
       - "5433:5432" # Host (my PC) → 5433, Container (Postgres) → 5432
+  
+  minio:
+    image: minio/minio:latest
+    container_name: minio_logs
+    command: server /data --console-address ":9001"
+    environment:
+        - MINIO_ROOT_USER=minadmin
+        - MINIO_ROOT_PASSWORD=admin2000
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+  
 
 
 volumes:
   kafka_kraft:
+  minio-data:
