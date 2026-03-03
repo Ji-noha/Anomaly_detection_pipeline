@@ -1,7 +1,4 @@
-json
 confluent_kafka 
-time
-psycopg2
+psycopg2-binary
+pandas
 minio 
-datetime
-uuid

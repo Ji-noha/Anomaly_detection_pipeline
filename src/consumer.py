@@ -28,7 +28,7 @@ minio_client= Minio(
     secret_key="admin2000",
     secure=False # because no HTTPS locally (its not puclic)
 )
-bucket_name="nginx-raw-logs" # define bucket
+bucket_name="logs-version-2" # define bucket
         
 if not minio_client.bucket_exists(bucket_name):
     minio_client.make_bucket(bucket_name)
@@ -72,7 +72,7 @@ try:
         # Convert string to bytes and wrap in BytesIO
         data = BytesIO(value.encode("utf-8"))
 
-        object_name=f"log-{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}-{uuid.uuid4()}.json"
+        object_name=f"log-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}-{uuid.uuid4()}.json"
         
         minio_client.put_object(
             bucket_name,

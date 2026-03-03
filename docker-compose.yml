@@ -7,6 +7,15 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/logs:/var/log/nginx
+    restart: always
+
+  traffic:
+      image: curlimages/curl
+      container_name: traffic_nginx
+      depends_on:
+          - nginx
+      command: sh -c "while true; do curl http://nginx; sleep 1; done"
+
   kafka:
     image: confluentinc/cp-kafka:7.7.1  #7.8.3
     container_name: kafka
@@ -33,6 +42,22 @@ services:
     volumes:
       - kafka_kraft:/var/lib/kafka/data
   
+  producer:
+    build: .
+    command: python src/producer.py
+    restart: always
+    depends_on:
+      - kafka
+  
+  consumer:
+    container_name: consumer_logs
+    build: .
+    command: python src/consumer.py
+    restart: always
+    depends_on:
+      - kafka
+      - postgres
+      - minio
   # create postgres database here 
   # VS Code only configures connections; it doesn’t create databases
   # next add these info to db connection in vscode
@@ -45,7 +70,9 @@ services:
       POSTGRES_DB: logdb
     ports:
       - "5433:5432" # Host (my PC) → 5433, Container (Postgres) → 5432
-  
+    volumes:
+    - mypfa_postgres-data:/var/lib/postgresql/data
+    restart: always
   minio:
     image: minio/minio:latest
     container_name: minio_logs
@@ -64,3 +91,4 @@ services:
 volumes:
   kafka_kraft:
   minio-data:
+  mypfa_postgres-data:
