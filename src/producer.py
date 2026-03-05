@@ -1,10 +1,9 @@
+import time
 from confluent_kafka import Producer
-import re
 import json
+import re
 
-producer = Producer({
-    "bootstrap.servers": "localhost:9092"
-})
+producer = Producer({"bootstrap.servers": "kafka:9092"})
 
 log_pattern = re.compile(
     r'(?P<ip>\S+) .* '
@@ -13,17 +12,15 @@ log_pattern = re.compile(
     r'(?P<status>\d{3})'
 )
 
-with open("nginx/logs/access.log", "r") as f:
-    for line in f:
-        match = log_pattern.search(line)
-        if not match:
-            continue
-
-        log_dict = match.groupdict()
-
-        producer.produce(
-            topic="nginx-logs",
-            value=json.dumps(log_dict).encode("utf-8")
-        )
-
-producer.flush()
+while True:
+    with open("nginx/logs/access.log", "r") as f:
+        for line in f:
+            match = log_pattern.search(line)
+            if match:
+                log_dict = match.groupdict()
+                producer.produce(
+                    topic="nginx-logs",
+                    value=json.dumps(log_dict).encode("utf-8")
+                )
+    producer.flush()
+    time.sleep(2)  # attend 2 secondes avant de relire le fichier

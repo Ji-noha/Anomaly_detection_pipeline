@@ -33,7 +33,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -43,9 +43,9 @@ services:
       - kafka_kraft:/var/lib/kafka/data
   
   producer:
+    container_name: producer_logs
     build: .
     command: python src/producer.py
-    restart: always
     depends_on:
       - kafka
   
@@ -53,7 +53,6 @@ services:
     container_name: consumer_logs
     build: .
     command: python src/consumer.py
-    restart: always
     depends_on:
       - kafka
       - postgres
@@ -72,7 +71,6 @@ services:
       - "5433:5432" # Host (my PC) → 5433, Container (Postgres) → 5432
     volumes:
     - mypfa_postgres-data:/var/lib/postgresql/data
-    restart: always
   minio:
     image: minio/minio:latest
     container_name: minio_logs
